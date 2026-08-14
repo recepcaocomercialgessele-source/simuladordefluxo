@@ -529,11 +529,12 @@ function defaultCondicoes(){
   const obra = todayISO(1);
   const entrega = todayISO(30);
   const primeiraParcela = addDaysISO(compra, 30);
+  const primeiroBalao = todayISO(12);
   return [
     {id:condId++, tipo:'Entrada', pct:10, qtd:1, periodicidade:'0', dataInicio:compra},
     {id:condId++, tipo:'Início de obra', pct:10, qtd:1, periodicidade:'0', dataInicio:obra},
     {id:condId++, tipo:'Parcelas', pct:40, qtd:100, periodicidade:'1', dataInicio:primeiraParcela},
-    {id:condId++, tipo:'Balão', pct:20, qtd:7, periodicidade:'12', dataInicio:compra},
+    {id:condId++, tipo:'Balão', pct:20, qtd:7, periodicidade:'12', dataInicio:primeiroBalao},
     {id:condId++, tipo:'Chaves', pct:20, qtd:1, periodicidade:'0', dataInicio:entrega},
   ];
 }
