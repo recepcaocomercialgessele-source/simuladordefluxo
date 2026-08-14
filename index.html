@@ -526,8 +526,8 @@ function defaultCondicoes(){
   return [
     {id:condId++, tipo:'Entrada', pct:10, qtd:1, periodicidade:'0', dataInicio:compra},
     {id:condId++, tipo:'Início de obra', pct:10, qtd:1, periodicidade:'0', dataInicio:obra},
-    {id:condId++, tipo:'Parcelas', pct:40, qtd:36, periodicidade:'1', dataInicio:compra},
-    {id:condId++, tipo:'Balão', pct:20, qtd:4, periodicidade:'12', dataInicio:compra},
+    {id:condId++, tipo:'Parcelas', pct:40, qtd:100, periodicidade:'1', dataInicio:compra},
+    {id:condId++, tipo:'Balão', pct:20, qtd:7, periodicidade:'12', dataInicio:compra},
     {id:condId++, tipo:'Chaves', pct:20, qtd:1, periodicidade:'0', dataInicio:entrega},
   ];
 }
@@ -808,12 +808,18 @@ function renderPorAno(parcelas){
 function renderKpis(parcelas){
   const vFinal = valorFinal();
   const total = parcelas.reduce((s,p)=>s+p.valor,0);
-  const anos = parcelas.length ? [...new Set(parcelas.map(p=>p.date.getFullYear()))] : [];
   const prazoMeses = parcelas.length ? Math.round((parcelas[parcelas.length-1].date - parcelas[0].date)/(1000*60*60*24*30.44)) : 0;
+  // anos e meses restantes sempre derivados do total de meses, nunca calculados
+  // separadamente, para o número entre parênteses nunca ficar dessincronizado
+  const anosCompletos = Math.floor(prazoMeses/12);
+  const mesesRestantes = prazoMeses % 12;
+  const prazoDetalhe = anosCompletos>0
+    ? `${anosCompletos} ${anosCompletos===1?'ano':'anos'}${mesesRestantes>0 ? ` e ${mesesRestantes} ${mesesRestantes===1?'mês':'meses'}` : ''}`
+    : `${mesesRestantes} ${mesesRestantes===1?'mês':'meses'}`;
   document.getElementById('kpis').innerHTML = `
     <div class="kpi"><span>Valor da unidade</span><strong>${fmtBRL.format(valorUnidade())}</strong></div>
     <div class="kpi"><span>Valor com desconto</span><strong>${fmtBRL.format(vFinal)}</strong></div>
-    <div class="kpi"><span>Prazo do contrato</span><strong>${prazoMeses} meses (${anos.length} anos)</strong></div>
+    <div class="kpi"><span>Prazo do contrato</span><strong>${prazoMeses} meses (${prazoDetalhe})</strong></div>
   `;
 }
 
