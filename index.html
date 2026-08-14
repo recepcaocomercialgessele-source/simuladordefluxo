@@ -471,6 +471,11 @@ function addMonths(date, months){
   d.setMonth(d.getMonth()+months);
   return d;
 }
+function addDaysISO(iso, dias){
+  const d = parseISO(iso);
+  d.setDate(d.getDate()+dias);
+  return d.toISOString().slice(0,10);
+}
 
 // Campos de data são <input type="text"> com máscara dd/mm/aaaa (o valor
 // canônico em ISO fica guardado em data-iso / no modelo). Isso permite
@@ -523,10 +528,11 @@ function defaultCondicoes(){
   const compra = todayISO();
   const obra = todayISO(1);
   const entrega = todayISO(30);
+  const primeiraParcela = addDaysISO(compra, 30);
   return [
     {id:condId++, tipo:'Entrada', pct:10, qtd:1, periodicidade:'0', dataInicio:compra},
     {id:condId++, tipo:'Início de obra', pct:10, qtd:1, periodicidade:'0', dataInicio:obra},
-    {id:condId++, tipo:'Parcelas', pct:40, qtd:100, periodicidade:'1', dataInicio:compra},
+    {id:condId++, tipo:'Parcelas', pct:40, qtd:100, periodicidade:'1', dataInicio:primeiraParcela},
     {id:condId++, tipo:'Balão', pct:20, qtd:7, periodicidade:'12', dataInicio:compra},
     {id:condId++, tipo:'Chaves', pct:20, qtd:1, periodicidade:'0', dataInicio:entrega},
   ];
