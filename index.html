@@ -594,6 +594,30 @@ function moverCondicao(idArrastado, idAlvo){
   recalcResultados();
 }
 
+// quando o % (ou o valor, que vira %) de uma condição muda, redistribui a
+// diferença entre as OUTRAS condições, proporcionalmente ao que cada uma já
+// tinha, para a soma continuar fechando em 100% sem precisar mexer em cada
+// uma na mão.
+function redistribuirPercentuais(idAlterado){
+  const alterada = condicoes.find(c=>c.id===idAlterado);
+  if(!alterada) return;
+  alterada.pct = Math.max(0, alterada.pct);
+
+  const outras = condicoes.filter(c=>c.id!==idAlterado);
+  if(outras.length===0) return;
+
+  const restante = Math.max(0, 100 - alterada.pct);
+  const somaOutrasAtual = outras.reduce((s,c)=>s+c.pct,0);
+
+  if(somaOutrasAtual > 0.0001){
+    const fator = restante / somaOutrasAtual;
+    outras.forEach(c=>{ c.pct = Math.max(0, c.pct*fator); });
+  } else {
+    const fatia = restante / outras.length;
+    outras.forEach(c=>{ c.pct = fatia; });
+  }
+}
+
 function buildCondRows(){
   const tbody = document.getElementById('condBody');
   tbody.innerHTML = '';
@@ -617,7 +641,7 @@ function buildCondRows(){
         </select>
       </td>
       <td><input type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" value="${isoParaBR(c.dataInicio)}" data-id="${c.id}" data-field="dataInicio" data-iso="${c.dataInicio}"></td>
-      <td><span class="tag" id="valTag-${c.id}"></span></td>
+      <td><input type="number" step="0.01" id="valTag-${c.id}" data-id="${c.id}" data-field="valorParcela" title="Digite um valor em R$ e o % é recalculado sozinho"></td>
       <td><button class="btn-remove" data-remove="${c.id}" title="Remover">✕</button></td>
     `;
     tbody.appendChild(tr);
@@ -665,8 +689,21 @@ function buildCondRows(){
       const field = e.target.dataset.field;
       const c = condicoes.find(x=>x.id===id);
       if(!c) return;
-      if(field==='pct' || field==='qtd'){
-        c[field] = parseFloat(e.target.value)||0;
+      if(field==='pct'){
+        c.pct = parseFloat(e.target.value)||0;
+        redistribuirPercentuais(c.id);
+      } else if(field==='qtd'){
+        c.qtd = parseFloat(e.target.value)||0;
+      } else if(field==='valorParcela'){
+        // vendedora digita o valor em R$ da parcela e a gente calcula o %
+        // equivalente, em vez do caminho normal (% -> valor)
+        const vFinal = valorFinal();
+        const novoValorParcela = parseFloat(e.target.value)||0;
+        if(vFinal > 0){
+          const novoTotalCondicao = novoValorParcela * (c.qtd>0 ? c.qtd : 1);
+          c.pct = (novoTotalCondicao / vFinal) * 100;
+          redistribuirPercentuais(c.id);
+        }
       } else if(field==='dataInicio'){
         const iso = brParaIso(e.target.value);
         if(iso){
@@ -714,8 +751,16 @@ function updateCondDerived(){
   condicoes.forEach(c=>{
     const valorCond = vFinal * c.pct/100;
     const valorParcela = c.qtd>0 ? valorCond/c.qtd : 0;
-    const tag = document.getElementById(`valTag-${c.id}`);
-    if(tag) tag.textContent = fmtBRL.format(valorParcela);
+
+    // nunca sobrescreve o campo que a pessoa está digitando agora, só os outros
+    const campoValor = document.getElementById(`valTag-${c.id}`);
+    if(campoValor && document.activeElement !== campoValor){
+      campoValor.value = valorParcela ? Number(valorParcela.toFixed(2)) : '';
+    }
+    const campoPct = document.querySelector(`input[data-field="pct"][data-id="${c.id}"]`);
+    if(campoPct && document.activeElement !== campoPct){
+      campoPct.value = Number(c.pct.toFixed(3));
+    }
   });
 
   const somaPct = condicoes.reduce((s,c)=>s+c.pct,0);
