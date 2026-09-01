@@ -690,8 +690,9 @@ function buildCondRows(){
       const c = condicoes.find(x=>x.id===id);
       if(!c) return;
       if(field==='pct'){
+        // edição manual do % é o jeito principal de personalizar o fluxo,
+        // por isso NÃO redistribui as outras condições, só essa mesma muda
         c.pct = parseFloat(e.target.value)||0;
-        redistribuirPercentuais(c.id);
       } else if(field==='qtd'){
         c.qtd = parseFloat(e.target.value)||0;
       } else if(field==='valorParcela'){
